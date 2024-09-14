@@ -1,0 +1,4 @@
+config.lua
+server/db/**/*
+.shrc
+a.lua
