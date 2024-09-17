@@ -5,6 +5,10 @@ local gpu = component.gpu
 
 Scroll = {
     _position = 1,
+    -- Разметка контейнера
+    x = 0,
+    y = 0,
+    -- Разметка скролл бара
     _scroll = {
         x = 0,
         y = 0,
@@ -20,7 +24,6 @@ Scroll = {
 function Scroll:new(constructor)
     constructor = constructor or {}
     constructor.scrollX = constructor.scrollX or 2;
-
     -- Получаем максимальную ширину контента
     -- и используем её в качестве ширины компонента,
     -- если не задано пользовательское значение
@@ -38,7 +41,7 @@ function Scroll:new(constructor)
 
     constructor._scroll = {
         width = 1,
-        x = x + width + 1,
+        x = x + width - 1,
         x2 = x + width + 2,
         y = y,
         y2 = y + height
@@ -67,26 +70,26 @@ function Scroll:_drawScroll()
     local sliderPosition = math.floor(self._position * self.height / #self.lines)
 
     if self._position > 1 then
-        gpu.fill(self.x + self.width - 4, self.y, 1, 1, "⌃")
+        gpu.fill(self._scroll.x - 2, self._scroll.y, 1, 1, "⌃")
     end
 
     if self._position ~= sliderHeight then
-        gpu.fill(self.x + self.width - 5, self.y + self.height - 1, 1, 1, "⌄")
+        gpu.fill(self._scroll.x - 2, self._scroll.y2 - 1, 1, 1, "⌄")
     end
 
     for i = 1, self.height do
         gpu.setBackground(0x123123)
-        gpu.fill(self.width + 2, self.y + i - 1, 1, 1, " ")
+        gpu.fill(self._scroll.x, self._scroll.y + i - 1, 1, 1, " ")
         gpu.setBackground(0x000000)
     end
 
     gpu.setBackground(0x000000)
-    gpu.fill(self.width + 2, self.y + sliderPosition, 1, sliderHeight, "█")
+    gpu.fill(self._scroll.x, self._scroll.y + sliderPosition, 1, sliderHeight, "█")
 end
 
 function Scroll:draw()
     -- Чистим поле компонента
-    gpu.fill(self.x, self.y, self.width + 2, self.height, " ")
+    gpu.fill(self.x, self.y, self.width, self.height, " ")
 
     self:_drawLines()
     self:_drawScroll()
@@ -115,14 +118,14 @@ function Scroll:scrollTo(offset)
 end
 
 function Scroll:setPosition(x, y)
-    local outOfHeight = y < self.y or y > self.y + self.height;
-    -- local outOfWidth = x < self.x + self.width - 2 or x > self.x + self.width + 2
+    local outOfHeight = y < self._scroll.y or y > self._scroll.y2;
+    local outOfWidth = x < self._scroll.x or x > self._scroll.x2;
 
-    if outOfHeight then
+    if outOfHeight or outOfWidth then
         return
     end
 
-    y = math.floor((y - self.y) * self.height / #self.lines)
+    y = math.floor((y - self._scroll.y) * self.height / #self.lines)
 
     if y == 0 then
         y = 1
