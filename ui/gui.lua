@@ -21,7 +21,7 @@ function GUI.centerText(x, y, width, text, color)
     local textLength = unicode.len(text)
 
     if textLength >= width then
-        return text -- Если текст длиннее ширины, возвращаем его без изменений
+        return text
     end
 
     local padding = math.ceil((width - textLength) / 2)
@@ -31,4 +31,17 @@ function GUI.centerText(x, y, width, text, color)
     gpu.setForeground(color)
     gpu.set(x, y, string.rep(" ", leftPadding) .. tostring(text) .. string.rep(" ", rightPadding))
     gpu.setForeground(oldColor)
+end
+
+function GUI.box(x, y, width, height)
+    gpu.set(x, y, "┏")
+    gpu.set(x + width, y, "┓")
+    gpu.set(x, y + height, "┗")
+    gpu.set(x + width, y + height, "┛")
+
+    gpu.fill(x + 1, y, width - 1, 1, "━")
+    gpu.fill(x + 1, y + height, width - 1, 1, "━")
+
+    gpu.fill(x + width, y + 1, 1, height - 1, "┃")
+    gpu.fill(x, y + 1, 1, height - 1, "┃")
 end
