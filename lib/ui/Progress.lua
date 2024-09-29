@@ -1,21 +1,14 @@
-local component = require("component")
-local unicode = require("unicode")
-
 local GUI = require("gui")
-
-local gpu = component.gpu
+local expect = require("lib.expect")
 
 Progress = {
     x = 0,
     y = 0,
     width = 0,
-    height = 1,
     title = nil,
-    text = nil,
-    completeText = nil,
+    description = nil,
     value = 0,
-    total = 0,
-    percentage = false
+    total = 0
 }
 
 function Progress:new(constructor)
@@ -23,31 +16,46 @@ function Progress:new(constructor)
     setmetatable(constructor, self)
     self.__index = self
 
+    expect(constructor.x, "number")
+    expect(constructor.y, "number")
+    expect(constructor.width, "number")
+    expect(constructor.value, "number")
+    expect(constructor.total, "number")
+
     return constructor
+end
+
+function Progress:getFilledWidth()
+    local percentage = self.value / self.total
+    return math.floor(percentage * self.width)
+end
+
+function Progress:drawField()
+    for i = self:getFilledWidth() + 1, self.width do
+        GUI.text(self.x + i - 1, self.y, "▊")
+    end
+end
+
+function Progress:drawFilledField()
+    for i = 1, self:getFilledWidth() do
+        GUI.text(self.x + i - 1, self.y, "▊", 0xFF0000)
+    end
 end
 
 function Progress:draw()
     local percentage = self.value / self.total
     local filledWidth = math.floor(percentage * self.width)
 
-    for i = filledWidth + 1, self.width do
-        GUI.text(self.x + i - 1, self.y, "▊")
-    end
-
-    for i = 1, filledWidth do
-        GUI.text(self.x + i - 1, self.y, "▊", 0xFF0000)
-    end
-
     if self.title then
-        GUI.centerText(self.x, self.y - 2, self.width, self.title)
+        GUI.centerText(self.x, self.y, self.width, self.title)
+        self.y = self.y + 2
     end
 
-    if self.text then
-        GUI.centerText(self.x, self.y + 2, self.width, self.text, 0x777777)
-    end
+    self:drawField();
+    self:drawFilledField()
 
-    if self.percentage then
-        GUI.text(self.x + self.width + 1, self.y, tostring(math.floor(percentage * 100 + 0.5)) .. "%")
+    if self.description then
+        GUI.centerText(self.x, self.y + 2, self.width, self.description)
     end
 end
 
@@ -57,5 +65,5 @@ function Progress:update(value)
     end
 
     self.value = value
-    self:draw()
+    self:drawFilledField()
 end

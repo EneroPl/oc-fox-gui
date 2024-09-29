@@ -1,52 +1,46 @@
-local component = require("component")
-local unicode = require("unicode")
-
-local gpu = component.gpu
+local GUI = require("lib.gui")
+local expect = require("lib.expect")
 
 Scroll = {
-    _listeners = {"scroll", "key_down", "drag", "touch"},
-    _position = 1,
-    -- Разметка контейнера
+    _listeners = {"scroll", "drag", "touch"},
+    _scroll = {},
+    position = 1,
     x = 0,
     y = 0,
-    -- Разметка скролл бара
-    _scroll = {
-        x = 0,
-        y = 0,
-        x2 = 0,
-        y2 = 0,
-        width = 1
-    },
     width = 0,
     height = 0,
-    lines = {}
+    text = {}
 }
 
 function Scroll:new(constructor)
     constructor = constructor or {}
-    constructor.scrollX = constructor.scrollX or 2;
-    -- Получаем максимальную ширину контента
-    -- и используем её в качестве ширины компонента,
-    -- если не задано пользовательское значение
+    constructor.position = constructor.position or 1
+
     if not constructor.width then
         constructor.width = 0;
 
-        for i = 1, #constructor.lines do
-            if unicode.len(constructor.lines[i]) > constructor.width then
-                constructor.width = #constructor.lines[i]
+        for i = 1, #constructor.text do
+            if GUI.len(constructor.text[i]) > constructor.width then
+                constructor.width = #constructor.text[i]
             end
         end
     end
-    -- Получаем координаты скролла
+
     local x, y, width, height = constructor.x, constructor.y, constructor.width, constructor.height
 
     constructor._scroll = {
-        width = 1,
-        x = x + width - 1,
-        x2 = x + width + 2,
+        x = x + width + 2,
         y = y,
-        y2 = y + height
+        width = 1,
+        height = y + height
     }
+
+    expect(constructor.position, "number")
+    expect(constructor.x, "number")
+    expect(constructor.y, "number")
+    expect(constructor.width, "number")
+    expect(constructor.height, "number")
+    expect(constructor.text, "table")
 
     setmetatable(constructor, self)
     self.__index = self
@@ -54,82 +48,63 @@ function Scroll:new(constructor)
     return constructor
 end
 
-function Scroll:_drawLines()
+function Scroll:drawContent()
     for i = 1, self.height do
-        local item = self.lines[(self._position - 1) + i]
+        local item = self.text[(self.position - 1) + i]
 
         if item == nil then
             break
         end
 
-        gpu.set(self.x, (self.y + i) - 1, item)
+        GUI.text(self.x, (self.y + i) - 1, item)
     end
 end
 
-function Scroll:_drawScroll()
-    local sliderHeight = math.floor(math.pow(self.height, 2) / #self.lines)
-    local sliderPosition = math.floor(self._position * self.height / #self.lines)
+function Scroll:drawScoll()
+    local sliderHeight = math.floor(math.pow(self.height, 2) / #self.text)
+    local sliderPosition = math.floor(self.position * self.height / #self.text)
 
-    if self._position > 1 then
-        gpu.fill(self._scroll.x - 2, self._scroll.y, 1, 1, "⌃")
-    end
-
-    if self._position ~= sliderHeight then
-        gpu.fill(self._scroll.x - 2, self._scroll.y2 - 1, 1, 1, "⌄")
+    -- Проверка на последнюю строку
+    if #self.text - self.height - self.position >= 0 and sliderPosition == sliderHeight then
+        sliderPosition = sliderPosition - 1
     end
 
     for i = 1, self.height do
-        gpu.setBackground(0x123123)
-        gpu.fill(self._scroll.x, self._scroll.y + i - 1, 1, 1, " ")
-        gpu.setBackground(0x000000)
+        GUI.text(self._scroll.x, (self._scroll.y + i) - 1, " ", 'white', 0x123123)
     end
 
-    gpu.setBackground(0x000000)
-    gpu.fill(self._scroll.x, self._scroll.y + sliderPosition, 1, sliderHeight, "█")
+    GUI.fill(self._scroll.x, self._scroll.y + sliderPosition, 1, sliderHeight, "█")
 end
 
 function Scroll:draw()
-    -- Чистим поле компонента
-    gpu.fill(self.x, self.y, self.width, self.height, " ")
-
-    self:_drawLines()
-    self:_drawScroll()
-end
-
-function Scroll:offsetPosition(to)
-    if to == -1 then
-        if self._position > 1 then
-            self._position = self._position - 1
-            self:draw()
-        end
-    elseif to == 1 then
-        if self._position < #self.lines - self.height + 1 then
-            self._position = self._position + 1
-            self:draw()
-        end
-    end
+    self:drawContent()
+    self:drawScoll()
 end
 
 function Scroll:scrollTo(offset)
-    if offset == 200 or offset == 1 then -- Стрелка вверх
-        self:offsetPosition(-1)
+    if (offset == 200 or offset == 1) and self.position > 1 then -- Стрелка вверх
+        self.position = self.position - 1
+        self:draw()
     elseif offset == 208 or offset == -1 then -- Стрелка вниз
-        self:offsetPosition(1)
+        if self.position < #self.text - self.height + 1 then
+            self.position = self.position + 1
+            self:draw()
+        end
     end
 end
 
-function Scroll:setPosition(x, y)
-    y = math.floor((y - self._scroll.y) * self.height / #self.lines)
+function Scroll:setPosition(y)
+    y = y - self.y
 
     if y == 0 then
         y = 1
     end
 
-    if y >= #self.lines - self.height + 1 then
-        y = #self.lines - self.height + 1
+    if self.height + y == #self.text then
+        y = #self.text - self.height + 1
     end
 
-    self._position = y
+    self.position = y
     self:draw()
 end
 
@@ -138,22 +113,18 @@ function Scroll:onEvent(arg1, arg2, arg3, arg4, arg5)
     local eventName = event[1]
 
     if eventName == "scroll" then
+        local outOfWidth = arg3 < self.x or arg3 > self._scroll.x;
         local outOfHeight = arg4 < self.y or arg4 > self.y + self.height;
-        local outOfWidth = arg3 < self.x or arg3 > self.x + self.width;
 
         if not outOfHeight and not outOfWidth then
             self:scrollTo(event[5])
         end
-    elseif eventName == "key_down" then
-
-        self:scrollTo(event[4])
     elseif eventName == "drag" or eventName == "touch" then
-        local outOfHeight = arg4 < self._scroll.y or arg4 > self._scroll.y2;
-        local outOfWidth = arg3 < self._scroll.x or arg3 > self._scroll.x2;
+        local outOfWidth = arg3 < self._scroll.x - 2 or arg3 > self._scroll.x + 2;
+        local outOfHeight = arg4 < self._scroll.y or arg4 > self._scroll.height;
 
         if not outOfHeight and not outOfWidth then
-            self:setPosition(event[3], event[4])
+            self:setPosition(event[4])
         end
     end
 end
-

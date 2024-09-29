@@ -26,7 +26,6 @@ function Button:new(constructor)
 
     expect(constructor.x, "number")
     expect(constructor.y, "number")
-    expect(constructor.text, "string")
     expect(constructor.width, "number")
     expect(constructor.height, "number")
     expect(constructor.onClick, "function")
@@ -53,11 +52,6 @@ function Button:onEvent(_, _, x, y)
     local isValidClick = self:validateClick(x, y)
 
     if isValidClick then
-        local needRedraw = self:onClick()
-        if needRedraw then
-            self:draw()
-        end
+        self:onClick(self)
     end
 end
-
-return Button

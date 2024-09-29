@@ -4,6 +4,7 @@ require("lib.ui.Progress")
 require("lib.ui.Scroll")
 -- End
 
+local expect = require("lib.expect")
 local EventBus = require("lib.eventBus")
 
 local COMPONENTS = {
@@ -14,7 +15,10 @@ local COMPONENTS = {
 
 local event = EventBus:new()
 
-Fox = {}
+Fox = {
+    _break = false
+}
+
 Fox.__index = Fox
 
 function Fox:new(constructor)
@@ -45,6 +49,29 @@ function Fox:addEvent(eventName, payload)
     event:on(eventName, payload)
 end
 
-function Fox:destroy()
+function Fox:removeEventListeners()
     event:destroy()
+end
+
+function Fox:loop(fn, s)
+    fn = fn or function()
+    end
+
+    expect(fn, "function")
+    expect(s, "number")
+
+    while true do
+        if self._break then
+            self:removeEventListeners();
+            break
+        end
+
+        fn()
+
+        os.sleep(s)
+    end
+end
+
+function Fox:exit()
+    self._break = true;
 end

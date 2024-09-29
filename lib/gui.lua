@@ -58,15 +58,15 @@ function GUI.text(x, y, text, color, bgColor)
         color = color,
         bgColor = bgColor,
         callback = function()
-            if type(text) == 'string' then
-                gpu.set(x, y, tostring(text))
-            elseif type(text) == 'table' then
+            if type(text) == 'table' then
                 local lineIndex = y
 
                 for _, line in pairs(text) do
                     gpu.set(x, lineIndex, tostring(line))
                     lineIndex = lineIndex + 1
                 end
+            else
+                gpu.set(x, y, tostring(text))
             end
         end
     })
