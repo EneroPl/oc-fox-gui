@@ -1,9 +1,5 @@
-local component = require("component")
-local unicode = require("unicode")
-
 local GUI = require("gui")
-
-local gpu = component.gpu
+local expect = require("lib.expect")
 
 Button = {
     _listeners = {"touch"},
@@ -21,24 +17,24 @@ function Button:new(constructor)
     constructor = constructor or {}
 
     if not constructor.width then
-        constructor.width = unicode.len(constructor.text) + 2
+        constructor.width = GUI.len(constructor.text) + 2
     end
 
     if not constructor.height then
         constructor.height = 2
     end
 
+    expect(constructor.x, "number")
+    expect(constructor.y, "number")
+    expect(constructor.text, "string")
+    expect(constructor.width, "number")
+    expect(constructor.height, "number")
+    expect(constructor.onClick, "function")
+
     setmetatable(constructor, self)
     self.__index = self
 
     return constructor
-end
-
-function Button.eventValidator(self, x, y)
-    local insideX = x >= self.x and x <= self.x + self.width
-    local insideY = y >= self.y and y <= self.y + self.height
-
-    return insideX and insideY
 end
 
 function Button:draw()

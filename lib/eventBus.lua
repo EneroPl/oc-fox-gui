@@ -45,6 +45,8 @@ function EventBus:on(eventName, item)
     self.listeners[eventName][length] = item
 end
 
+-- TODO: Добавить возможность удалять событие конкретного компонента,
+-- а не всего события
 function EventBus:off(eventName, callback)
     if not self.listeners[eventName] then
         return
