@@ -2,5 +2,5 @@
 
 Всё это гавно - самописное, старался от всей души.
 
-- [Fox docs](./docs/FoxUI.md)
+- [Fox docs](./docs/Fox.md)
 - [GUI docs](./docs/GUI.md)
