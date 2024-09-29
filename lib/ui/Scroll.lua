@@ -4,6 +4,7 @@ local unicode = require("unicode")
 local gpu = component.gpu
 
 Scroll = {
+    _listeners = {"scroll", "key_down", "drag", "touch"},
     _position = 1,
     -- Разметка контейнера
     x = 0,
@@ -118,32 +119,41 @@ function Scroll:scrollTo(offset)
 end
 
 function Scroll:setPosition(x, y)
-    local outOfHeight = y < self._scroll.y or y > self._scroll.y2;
-    local outOfWidth = x < self._scroll.x or x > self._scroll.x2;
-
-    if outOfHeight or outOfWidth then
-        return
-    end
-
     y = math.floor((y - self._scroll.y) * self.height / #self.lines)
 
     if y == 0 then
         y = 1
     end
 
+    if y >= #self.lines - self.height + 1 then
+        y = #self.lines - self.height + 1
+    end
+
     self._position = y
     self:draw()
 end
 
-function Scroll:onEvent(event)
+function Scroll:onEvent(arg1, arg2, arg3, arg4, arg5)
+    local event = {arg1, arg2, arg3, arg4, arg5}
     local eventName = event[1]
 
     if eventName == "scroll" then
-        self:scrollTo(event[5])
+        local outOfHeight = arg4 < self.y or arg4 > self.y + self.height;
+        local outOfWidth = arg3 < self.x or arg3 > self.x + self.width;
+
+        if not outOfHeight and not outOfWidth then
+            self:scrollTo(event[5])
+        end
     elseif eventName == "key_down" then
+
         self:scrollTo(event[4])
     elseif eventName == "drag" or eventName == "touch" then
-        self:setPosition(event[3], event[4])
+        local outOfHeight = arg4 < self._scroll.y or arg4 > self._scroll.y2;
+        local outOfWidth = arg3 < self._scroll.x or arg3 > self._scroll.x2;
+
+        if not outOfHeight and not outOfWidth then
+            self:setPosition(event[3], event[4])
+        end
     end
 end
 

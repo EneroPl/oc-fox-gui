@@ -1,11 +1,11 @@
 local component = require("component")
 local unicode = require("unicode")
 
-require("ui.gui")
+local GUI = require("gui")
 
 local gpu = component.gpu
 
-ProgressBar = {
+Progress = {
     x = 0,
     y = 0,
     width = 0,
@@ -18,7 +18,7 @@ ProgressBar = {
     percentage = false
 }
 
-function ProgressBar:new(constructor)
+function Progress:new(constructor)
     constructor = constructor or {}
     setmetatable(constructor, self)
     self.__index = self
@@ -26,7 +26,7 @@ function ProgressBar:new(constructor)
     return constructor
 end
 
-function ProgressBar:draw()
+function Progress:draw()
     local percentage = self.value / self.total
     local filledWidth = math.floor(percentage * self.width)
 
@@ -42,9 +42,7 @@ function ProgressBar:draw()
         GUI.centerText(self.x, self.y - 2, self.width, self.title)
     end
 
-    if self.completeText and self.value == self.total then
-        GUI.centerText(self.x, self.y + 2, self.width, self.completeText, 0xb8b52b)
-    elseif self.text then
+    if self.text then
         GUI.centerText(self.x, self.y + 2, self.width, self.text, 0x777777)
     end
 
@@ -53,7 +51,7 @@ function ProgressBar:draw()
     end
 end
 
-function ProgressBar:update(value)
+function Progress:update(value)
     if value > self.total then
         return
     end
