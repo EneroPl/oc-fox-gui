@@ -11,6 +11,28 @@ local COLORS = {
     red = 0xFF0000
 }
 
+local DEFAULT_SIDES_ROUNDED = {
+    TOP_LEFT = "╭",
+    TOP_RIGHT = "╮",
+    BOTTOM_LEFT = "╰",
+    BOTTOM_RIGHT = "╯",
+    LEFT = "│",
+    TOP = "─",
+    RIGHT = "│",
+    BOTTOM = "─"
+}
+
+local DEFAULT_SIDES = {
+    TOP_LEFT = "┏",
+    TOP_RIGHT = "┓",
+    BOTTOM_LEFT = "┗",
+    BOTTOM_RIGHT = "┛",
+    LEFT = "┃",
+    TOP = "━",
+    RIGHT = "┃",
+    BOTTOM = "━"
+}
+
 function GUI._initColor(color, default)
     return COLORS[color] or color or default
 end
@@ -34,21 +56,34 @@ function GUI.clear()
     term.clear()
 end
 
-function GUI.box(x, y, width, height, color, bgColor)
+function GUI.isClickInside(clickX, clickY, x, y, x2, y2)
+    local isInsideX = clickX >= x and clickX <= x2;
+    local isInsideY = clickY >= y and clickY <= y2;
+
+    return isInsideX and isInsideY;
+end
+
+function GUI.box(x, y, width, height, color, bgColor, rounded)
+    local sides = DEFAULT_SIDES
+
+    if rounded then
+        sides = DEFAULT_SIDES_ROUNDED
+    end
+
     GUI._wrapFn({
         color = color,
         bgColor = bgColor,
         callback = function()
-            gpu.set(x, y, "┏")
-            gpu.set(x + width, y, "┓")
-            gpu.set(x, y + height, "┗")
-            gpu.set(x + width, y + height, "┛")
+            gpu.set(x, y, sides.TOP_LEFT)
+            gpu.set(x + width, y, sides.TOP_RIGHT)
+            gpu.set(x, y + height, sides.BOTTOM_LEFT)
+            gpu.set(x + width, y + height, sides.BOTTOM_RIGHT)
 
-            gpu.fill(x + 1, y, width - 1, 1, "━")
-            gpu.fill(x + 1, y + height, width - 1, 1, "━")
+            gpu.fill(x + 1, y, width - 1, 1, sides.TOP)
+            gpu.fill(x + 1, y + height, width - 1, 1, sides.BOTTOM)
 
-            gpu.fill(x + width, y + 1, 1, height - 1, "┃")
-            gpu.fill(x, y + 1, 1, height - 1, "┃")
+            gpu.fill(x + width, y + 1, 1, height - 1, sides.LEFT)
+            gpu.fill(x, y + 1, 1, height - 1, sides.RIGHT)
         end
     })
 end

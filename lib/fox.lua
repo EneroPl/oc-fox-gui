@@ -2,6 +2,7 @@
 require("lib.ui.Button")
 require("lib.ui.Progress")
 require("lib.ui.Scroll")
+require("lib.ui.Checkbox")
 -- End
 
 local expect = require("lib.expect")
@@ -10,7 +11,8 @@ local EventBus = require("lib.eventBus")
 local COMPONENTS = {
     button = Button,
     progress = Progress,
-    scroll = Scroll
+    scroll = Scroll,
+    checkbox = Checkbox
 }
 
 local event = EventBus:new()
